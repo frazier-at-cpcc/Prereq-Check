@@ -22,14 +22,14 @@ def load_data():
     """Load the CSV and Excel files."""
     try:
         # Load student enrollment data
-        csv_file = "ST STC List students enrolled in a term taking a certain class list their history of course records RISE.csv"
+        csv_file = "ST.csv"
         df_students = pd.read_csv(csv_file)
         
         # Clean column names (remove extra spaces)
         df_students.columns = df_students.columns.str.strip()
         
         # Load prerequisites data
-        excel_file = "Prerequisites  IT and AI Degrees.xlsx"
+        excel_file = "Prerequisites.xlsx"
         df_prereqs = pd.read_excel(excel_file, sheet_name='Prerequisites')
         
         return df_students, df_prereqs
