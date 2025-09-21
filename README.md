@@ -6,10 +6,24 @@ A Python tool that analyzes student enrollment data to identify prerequisite vio
 
 - ✅ Analyzes student enrollment data against prerequisite requirements
 - ✅ Identifies students enrolled in courses without completing prerequisites
+- ✅ **Recognizes in-progress prerequisites** with 'N' or 'A' status and blank grades
+- ✅ **Smart concurrent enrollment detection** for same-semester prerequisites
 - ✅ Generates comprehensive violation reports
 - ✅ Exports detailed CSV reports for further analysis
 - ✅ Provides executive summary with violation statistics
 - ✅ Highlights students with multiple violations
+
+## Key Logic Features
+
+### Prerequisite Recognition
+The tool recognizes prerequisites as satisfied in the following scenarios:
+
+1. **Completed Prerequisites**: Courses taken in previous terms with verified grades
+2. **In-Progress Prerequisites**: Courses taken in previous terms or concurrently with:
+   - Current Status of 'N' (enrolled) or 'A' (active)
+   - Blank or empty Verified Grade field
+
+This ensures students are not flagged when they are legitimately taking prerequisites and follow-up courses in logical sequence (e.g., taking CSC-113 in Fall 2025 and CSC-114 in Spring 2026).
 
 ## Requirements
 
@@ -48,8 +62,8 @@ The tool requires two data files to be placed in the same directory as the scrip
 - `Student Email`: Student's email address
 - `Term`: Academic term (format: YYYYFA/YYYYSP, e.g., 2025FA, 2026SP)
 - `Course Name`: Name of the course
-- `Verified Grade`: Grade received (if completed)
-- `Current Status`: Current enrollment status
+- `Verified Grade`: Grade received (if completed, may be blank for in-progress courses)
+- `Current Status`: Current enrollment status ('N' for enrolled, 'A' for active, etc.)
 
 #### Prerequisites Excel Expected Columns:
 - Column B (index 1): Course Prefix & Course Number
@@ -98,19 +112,25 @@ Students Enrolled in 2025FA & 2026SP Without Meeting Prerequisites
 ================================================================================
 
 EXECUTIVE SUMMARY:
-Total Violations Found: 45
-Students Affected: 23
+Total Violations Found: 38
+Students Affected: 30
 Terms Analyzed: 2025FA (Fall 2025) and 2026SP (Spring 2026)
 
 PREREQUISITE REQUIREMENTS ANALYZED:
-  Advanced Programming → requires Introduction to Programming
-  Database Design → requires Data Structures
-  ...
+  CSC-115 → requires CSC-112
+  CSC-215 → requires CSC-115
+  CSC-161 → requires CSC-215
+  CSC-162 → requires CSC-161
+  CSC-114 → requires CSC-113
+  CSC-214 → requires CSC-114
+  CSC-128 → requires CSC-121
+  CSC-228 → requires CSC-128
+  WEB-140 → requires WEB-110
 
 MOST COMMON VIOLATIONS:
-  1. Advanced Programming without Introduction to Programming: 12 violations
-  2. Database Design without Data Structures: 8 violations
-  ...
+  1. CSC-115 without CSC-112: 9 violations
+  2. CSC-114 without CSC-113: 8 violations
+  3. CSC-162 without CSC-161: 8 violations
 ```
 
 ## How It Works
@@ -120,9 +140,21 @@ MOST COMMON VIOLATIONS:
 3. **Term Comparison**: Implements chronological term ordering (SP < SU < FA)
 4. **Violation Detection**: For each enrollment in target terms (2025FA, 2026SP):
    - Checks if the course has prerequisites
-   - Verifies if the student completed prerequisites before enrollment
-   - Records violations where prerequisites are missing
+   - Verifies if the student completed prerequisites through:
+     - **Completed courses**: Previous terms with verified grades
+     - **In-progress courses**: Previous or same term with 'N'/'A' status and blank grades
+   - Records violations only when prerequisites are truly missing
 5. **Report Generation**: Organizes and presents findings in multiple formats
+
+### Smart Prerequisite Logic
+
+The tool uses intelligent logic to avoid false positives:
+
+- **Concurrent Enrollment**: Students taking a prerequisite and follow-up course in the same semester are not flagged
+- **In-Progress Recognition**: Prerequisites with 'N' or 'A' status and blank grades are considered valid
+- **Sequential Planning**: Students who took prerequisites in Fall 2025 are not flagged for follow-up courses in Spring 2026
+
+This ensures the tool identifies true violations while respecting normal academic progression patterns.
 
 ## Troubleshooting
 
@@ -135,10 +167,11 @@ Error: Could not find required file: ...
 - Ensure both data files are in the same directory as the script
 - Check that filenames match exactly (including spaces and capitalization)
 
-**Empty Results**
-- Verify data file formats match expected column structures
-- Check that term values follow the YYYYFA/YYYYSP format
-- Ensure prerequisite data is properly formatted in the Excel file
+**Empty or Fewer Results Than Expected**
+- The tool now uses smart logic to avoid false positives
+- Students taking prerequisites concurrently or in logical sequence are not flagged
+- Verify that actual prerequisite violations exist in your data
+- Check that Current Status values include 'N' and 'A' for enrolled students
 
 **Data Loading Errors**
 - Verify CSV file is properly formatted and not corrupted
@@ -156,3 +189,4 @@ This project is provided as-is for educational and administrative purposes.
 ---
 
 *Last updated: September 21, 2025*
+*Recent updates: Enhanced prerequisite logic to handle in-progress courses and concurrent enrollment*
