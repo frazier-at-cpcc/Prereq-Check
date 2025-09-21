@@ -79,15 +79,24 @@ def has_completed_prerequisite(student_id, prerequisite_course, before_term, df_
     """Check if a student has completed a prerequisite course before a given term."""
     student_records = df_students[df_students['Student Id'] == student_id]
     
-    # Find records where student took the prerequisite course
-    prereq_records = student_records[
+    # Find records where student took the prerequisite course before the target term with verified grades
+    prereq_records_with_grade = student_records[
         (student_records['Course Name'] == prerequisite_course) &
         (student_records['Verified Grade'].notna()) &
         (student_records['Verified Grade'] != '') &
         (student_records['Term'].apply(lambda x: is_term_before(x, before_term)))
     ]
     
-    return len(prereq_records) > 0
+    # Also check for prerequisites taken before or in the same semester with 'N' or 'A' status and blank grade
+    prereq_records_n_a_status = student_records[
+        (student_records['Course Name'] == prerequisite_course) &
+        (student_records['Current Status'].isin(['N', 'A'])) &
+        ((student_records['Verified Grade'].isna()) | (student_records['Verified Grade'] == '')) &
+        ((student_records['Term'].apply(lambda x: is_term_before(x, before_term))) | 
+         (student_records['Term'] == before_term))
+    ]
+    
+    return len(prereq_records_with_grade) > 0 or len(prereq_records_n_a_status) > 0
 
 def analyze_violations(df_students, prerequisites):
     """Analyze prerequisite violations for target terms."""
